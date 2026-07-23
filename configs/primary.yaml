@@ -1,0 +1,37 @@
+name: swin-primary
+wandb_project: assignment-5-transformers
+seed: 42
+
+data:
+  root: /content/datasets
+  image_size: 32
+  split_file: data_splits/cifar100_split_seed42.npz
+  val_size: 5000
+  download: true
+  num_workers: 2
+  mean: [0.5071, 0.4867, 0.4408]
+  std: [0.2675, 0.2565, 0.2761]
+
+model:
+  name: swin
+  patch_size: 2
+  window_size: 4
+  embed_dim: 64
+  depths: [2, 2, 6, 2]
+  num_heads: [2, 4, 8, 16]
+  mlp_ratio: 4.0
+  dropout: 0.0
+  stochastic_depth: 0.15
+  num_classes: 100
+
+training:
+  epochs: 300
+  batch_size: 256
+  learning_rate: 0.001
+  weight_decay: 0.05
+  warmup_epochs: 10
+  gradient_clip_norm: 1.0
+  patience: 10
+  label_smoothing: 0.1
+  checkpoint: checkpoints/swin_best.pt
+  log_file: logs/primary_training.csv

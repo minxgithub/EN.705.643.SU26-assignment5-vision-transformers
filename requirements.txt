@@ -1,0 +1,9 @@
+torch>=2.2
+torchvision>=0.17
+numpy>=1.26
+PyYAML>=6.0
+scikit-learn>=1.4
+matplotlib>=3.8
+tqdm>=4.66
+wandb>=0.17
+pytest>=8.0
