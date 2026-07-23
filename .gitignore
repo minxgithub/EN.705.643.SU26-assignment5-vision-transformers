@@ -13,6 +13,7 @@ htmlcov/
 checkpoints/*
 !checkpoints/.gitkeep
 data_splits/*.npz
+!data_splits/cifar100_split_seed42.npz
 logs/*.csv
 figures/*.png
 *.pt
