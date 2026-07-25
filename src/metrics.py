@@ -9,7 +9,10 @@ from sklearn.metrics import (
 )
 
 
-def calculate_metrics(probabilities, targets, class_names):
+def calculate_metrics(  # pylint: disable=too-many-locals
+    probabilities, targets, class_names
+):
+    """Calculate overall, per-class, and confusion-based metrics."""
     probabilities = np.array(probabilities)
     targets = np.array(targets)
     predictions = probabilities.argmax(axis=1)
@@ -42,7 +45,9 @@ def calculate_metrics(probabilities, targets, class_names):
     np.fill_diagonal(confusion_counts, 0)
     common_confusions = []
     for position in np.argsort(confusion_counts, axis=None)[-3:][::-1]:
-        true_index, predicted_index = np.unravel_index(position, confusion_counts.shape)
+        coordinates = np.unravel_index(position, confusion_counts.shape)
+        true_index = coordinates[0]
+        predicted_index = coordinates[1]
         common_confusions.append({
             "true_label": class_names[true_index],
             "predicted_label": class_names[predicted_index],
@@ -59,8 +64,14 @@ def calculate_metrics(probabilities, targets, class_names):
             roc_auc_score(targets, probabilities, multi_class="ovr", average="macro")
         ),
         "per_class": per_class,
-        "five_highest_f1": [dict(class_name=name, **values) for name, values in ranked_classes[-5:][::-1]],
-        "five_lowest_f1": [dict(class_name=name, **values) for name, values in ranked_classes[:5]],
+        "five_highest_f1": [
+            {"class_name": name, **values}
+            for name, values in ranked_classes[-5:][::-1]
+        ],
+        "five_lowest_f1": [
+            {"class_name": name, **values}
+            for name, values in ranked_classes[:5]
+        ],
         "common_confusions": common_confusions,
         "confusion_matrix": matrix.tolist(),
     }

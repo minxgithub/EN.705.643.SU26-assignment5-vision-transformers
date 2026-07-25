@@ -17,7 +17,8 @@ from src.models import build_model
 from src.utils import get_device, load_config, seed_everything
 
 
-def evaluate(model, dataloader, criterion, device, collect_errors=False):
+def evaluate(model, dataloader, criterion, device, collect_errors=False):  # pylint: disable=too-many-locals
+    """Evaluate a model and optionally collect its misclassified examples."""
     model.eval()
     total_loss = 0.0
     probabilities = []
@@ -80,7 +81,8 @@ def save_error_examples(errors, class_names, mean, std, output_file):
     plt.close(figure)
 
 
-def main():
+def main():  # pylint: disable=too-many-locals
+    """Load a saved checkpoint and evaluate it on validation or test data."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     parser.add_argument("--checkpoint", required=True)
@@ -98,7 +100,7 @@ def main():
     model.load_state_dict(torch.load(args.checkpoint, map_location=device))
 
     wandb.init(project=config["wandb_project"], name=config["name"] + "-evaluation")
-    loss, acc, probabilities, targets, errors = evaluate(
+    loss, acc, probabilities, targets, errors = evaluate(  # pylint: disable=unused-variable
         model, loaders[args.split], nn.CrossEntropyLoss(), device, collect_errors=True
     )
     metrics = calculate_metrics(probabilities, targets, class_names)

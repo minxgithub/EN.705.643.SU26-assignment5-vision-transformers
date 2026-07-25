@@ -10,12 +10,14 @@ from torchvision import datasets, transforms
 
 
 def get_transforms(mean, std, image_size=32):
+    """Return the training and evaluation image transforms."""
     train_transform = transforms.Compose([
         transforms.RandomResizedCrop(image_size, scale=(0.8, 1.0)),
         transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+        transforms.RandAugment(num_ops=2, magnitude=9),
         transforms.ToTensor(),
         transforms.Normalize(mean, std),
+        transforms.RandomErasing(p=0.25),
     ])
     test_transform = transforms.Compose([
         transforms.Resize((image_size, image_size)),
@@ -47,7 +49,7 @@ def get_split(targets, split_file, val_size=5000, seed=42):
     return train_indices, val_indices
 
 
-def get_dataloaders(data_config, batch_size, seed=42):
+def get_dataloaders(data_config, batch_size, seed=42):  # pylint: disable=too-many-locals
     """Return train, validation, and test DataLoaders."""
     root = data_config["root"]
     mean = data_config["mean"]

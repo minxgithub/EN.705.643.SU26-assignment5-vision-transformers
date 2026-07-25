@@ -16,7 +16,8 @@ from src.models import build_model
 from src.utils import get_device, load_config, seed_everything
 
 
-def train_batch(model, images, labels, criterion, optimizer, clip_norm):
+def train_batch(model, images, labels, criterion, optimizer, clip_norm):  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    """Train the model on one batch and return its loss and correct predictions."""
     optimizer.zero_grad()
     output = model(images)
     loss = criterion(output, labels)
@@ -27,7 +28,8 @@ def train_batch(model, images, labels, criterion, optimizer, clip_norm):
     return loss.item(), correct
 
 
-def train_epoch(model, dataloader, criterion, optimizer, device, clip_norm):
+def train_epoch(model, dataloader, criterion, optimizer, device, clip_norm):  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    """Train the model for one epoch and return its average loss and accuracy."""
     model.train()
     total_loss = 0.0
     total_correct = 0
@@ -43,7 +45,8 @@ def train_epoch(model, dataloader, criterion, optimizer, device, clip_norm):
     return total_loss / len(dataloader.dataset), total_correct / len(dataloader.dataset)
 
 
-def train(model, loaders, config, device):
+def train(model, loaders, config, device):  # pylint: disable=too-many-locals
+    """Train and validate the model, save logs, and keep the best checkpoint."""
     criterion = nn.CrossEntropyLoss(label_smoothing=config.get("label_smoothing", 0.0))
     optimizer = torch.optim.AdamW(
         model.parameters(),
@@ -110,8 +113,9 @@ def train(model, loaders, config, device):
         wandb.log(epoch_log)
         print(
             f"Epoch {epoch + 1}/{config['epochs']} - "
-            f"train loss: {train_loss:.4f}, val loss: {val_loss:.4f}, "
-            f"val accuracy: {val_accuracy:.4f}, time: {duration:.1f}s"
+            f"train loss: {train_loss:.4f}, train accuracy: {train_accuracy:.4f}, "
+            f"val loss: {val_loss:.4f}, val accuracy: {val_accuracy:.4f}, "
+            f"lr: {learning_rate:.6f}, time: {duration:.1f}s"
         )
 
         if val_accuracy > best_accuracy:
@@ -130,6 +134,7 @@ def train(model, loaders, config, device):
 
 
 def main():
+    """Load the configuration and run the model-training pipeline."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", required=True)
     args = parser.parse_args()

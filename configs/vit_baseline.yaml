@@ -19,6 +19,7 @@ model:
   embed_dim: 384
   depth: 7
   num_heads: 6
+  dropout: 0.1
   num_classes: 100
 
 training:
@@ -28,7 +29,7 @@ training:
   weight_decay: 0.05
   warmup_epochs: 10
   gradient_clip_norm: 1.0
-  patience: 10
+  patience: 30
   label_smoothing: 0.1
   checkpoint: checkpoints/vit_best.pt
   log_file: logs/vit_training.csv

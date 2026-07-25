@@ -4,6 +4,7 @@ from torchvision.models import SwinTransformer, VisionTransformer
 
 
 def build_model(config):
+    """Build the configured torchvision Swin Transformer or Vision Transformer."""
     name = config["name"]
 
     if name == "swin":
@@ -27,6 +28,8 @@ def build_model(config):
             num_heads=config["num_heads"],
             hidden_dim=config["embed_dim"],
             mlp_dim=config["embed_dim"] * 4,
+            dropout=config["dropout"],
+            attention_dropout=config["dropout"],
             num_classes=config["num_classes"],
         )
 

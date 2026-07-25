@@ -20,8 +20,8 @@ model:
   depths: [2, 2, 6, 2]
   num_heads: [2, 4, 8, 16]
   mlp_ratio: 4.0
-  dropout: 0.0
-  stochastic_depth: 0.15
+  dropout: 0.1
+  stochastic_depth: 0.2
   num_classes: 100
 
 training:
@@ -31,7 +31,7 @@ training:
   weight_decay: 0.05
   warmup_epochs: 10
   gradient_clip_norm: 1.0
-  patience: 10
+  patience: 30
   label_smoothing: 0.1
   checkpoint: checkpoints/swin_best.pt
   log_file: logs/primary_training.csv
