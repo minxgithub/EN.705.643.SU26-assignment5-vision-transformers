@@ -141,6 +141,7 @@ def train(model, loaders, config, device):  # pylint: disable=too-many-locals
         csv.DictWriter(file, fieldnames=log_columns).writeheader()
 
     best_accuracy = -1.0
+    best_epoch = 0
     epochs_without_improvement = 0
 
     for epoch in range(config["epochs"]):
@@ -184,6 +185,7 @@ def train(model, loaders, config, device):  # pylint: disable=too-many-locals
 
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
+            best_epoch = epoch + 1
             epochs_without_improvement = 0
             torch.save(model.state_dict(), config["checkpoint"])
         else:
@@ -195,6 +197,13 @@ def train(model, loaders, config, device):  # pylint: disable=too-many-locals
                 f"{config['patience']} epochs."
             )
             break
+
+    print(
+        f"Best epoch: {best_epoch}, "
+        f"best validation accuracy: {best_accuracy:.4f}"
+    )
+    wandb.run.summary["best_epoch"] = best_epoch
+    wandb.run.summary["best_validation_accuracy"] = best_accuracy
 
 
 def main():
