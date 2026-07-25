@@ -16,19 +16,74 @@ from src.models import build_model
 from src.utils import get_device, load_config, seed_everything
 
 
-def train_batch(model, images, labels, criterion, optimizer, clip_norm):  # pylint: disable=too-many-arguments, too-many-positional-arguments
+def apply_cutmix(images, labels, alpha, probability):
+    """Mix a rectangular region between pairs of images in a batch."""
+    if alpha <= 0 or torch.rand(1).item() >= probability:
+        return images, labels, labels, 1.0
+
+    shuffled = torch.randperm(images.size(0), device=images.device)
+    labels_b = labels[shuffled]
+    mix_ratio = torch.distributions.Beta(alpha, alpha).sample().item()
+
+    height, width = images.shape[-2:]
+    cut_ratio = (1.0 - mix_ratio) ** 0.5
+    cut_height = int(height * cut_ratio)
+    cut_width = int(width * cut_ratio)
+    center_y = torch.randint(height, (1,)).item()
+    center_x = torch.randint(width, (1,)).item()
+
+    y1 = max(center_y - cut_height // 2, 0)
+    y2 = min(center_y + cut_height // 2, height)
+    x1 = max(center_x - cut_width // 2, 0)
+    x2 = min(center_x + cut_width // 2, width)
+
+    mixed_images = images.clone()
+    mixed_images[:, :, y1:y2, x1:x2] = images[shuffled, :, y1:y2, x1:x2]
+    mix_ratio = 1.0 - ((y2 - y1) * (x2 - x1) / (height * width))
+    return mixed_images, labels, labels_b, mix_ratio
+
+
+def train_batch(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    model,
+    images,
+    labels,
+    criterion,
+    optimizer,
+    clip_norm,
+    cutmix_alpha,
+    cutmix_probability,
+):
     """Train the model on one batch and return its loss and correct predictions."""
+    images, labels_a, labels_b, mix_ratio = apply_cutmix(
+        images, labels, cutmix_alpha, cutmix_probability
+    )
     optimizer.zero_grad()
     output = model(images)
-    loss = criterion(output, labels)
+    loss = (
+        mix_ratio * criterion(output, labels_a)
+        + (1.0 - mix_ratio) * criterion(output, labels_b)
+    )
     loss.backward()
     torch.nn.utils.clip_grad_norm_(model.parameters(), clip_norm)
     optimizer.step()
-    correct = (output.argmax(1) == labels).sum().item()
+    predictions = output.argmax(1)
+    correct = (
+        mix_ratio * (predictions == labels_a).sum().item()
+        + (1.0 - mix_ratio) * (predictions == labels_b).sum().item()
+    )
     return loss.item(), correct
 
 
-def train_epoch(model, dataloader, criterion, optimizer, device, clip_norm):  # pylint: disable=too-many-arguments, too-many-positional-arguments
+def train_epoch(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+    model,
+    dataloader,
+    criterion,
+    optimizer,
+    device,
+    clip_norm,
+    cutmix_alpha,
+    cutmix_probability,
+):
     """Train the model for one epoch and return its average loss and accuracy."""
     model.train()
     total_loss = 0.0
@@ -37,7 +92,14 @@ def train_epoch(model, dataloader, criterion, optimizer, device, clip_norm):  # 
     for images, labels in tqdm(dataloader):
         images, labels = images.to(device), labels.to(device)
         loss, correct = train_batch(
-            model, images, labels, criterion, optimizer, clip_norm
+            model,
+            images,
+            labels,
+            criterion,
+            optimizer,
+            clip_norm,
+            cutmix_alpha,
+            cutmix_probability,
         )
         total_loss += loss * labels.size(0)
         total_correct += correct
@@ -91,6 +153,8 @@ def train(model, loaders, config, device):  # pylint: disable=too-many-locals
             optimizer,
             device,
             config["gradient_clip_norm"],
+            config.get("cutmix_alpha", 0.0),
+            config.get("cutmix_probability", 0.0),
         )
         val_loss, val_accuracy, _, _, _ = evaluate(
             model, loaders["val"], criterion, device

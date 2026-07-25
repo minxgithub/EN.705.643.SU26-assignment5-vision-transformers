@@ -31,7 +31,9 @@ training:
   weight_decay: 0.05
   warmup_epochs: 10
   gradient_clip_norm: 1.0
-  patience: 30
+  patience: 60
   label_smoothing: 0.1
+  cutmix_alpha: 1.0
+  cutmix_probability: 0.5
   checkpoint: checkpoints/swin_best.pt
   log_file: logs/primary_training.csv
